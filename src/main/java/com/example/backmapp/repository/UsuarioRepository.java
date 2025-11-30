@@ -2,13 +2,14 @@ package com.example.backmapp.repository;
 
 import com.example.backmapp.entity.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UsuarioRepository1 extends JpaRepository<Usuario, String> {
+public interface UsuarioRepository extends JpaRepository<Usuario, String> {
 
     Optional<Usuario> findByEmail(String email);
 
@@ -16,5 +17,5 @@ public interface UsuarioRepository1 extends JpaRepository<Usuario, String> {
 
     List<Usuario> findByEstado(Usuario.EstadoUsuario estado);
 
-
+    boolean existsByEmail(String email);
 }
