@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.backmapp.validation.OnCreate;
+import com.example.backmapp.validation.OnUpdate;
+import org.springframework.validation.annotation.Validated;
 import java.util.List;
 
 
@@ -36,7 +38,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crear(@Valid @RequestBody Usuario usuario) {
+    public ResponseEntity<?> crear(@Validated(OnCreate.class) @RequestBody Usuario usuario) {
         try {
             Usuario nuevoUsuario = usuarioService.crear(usuario);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
@@ -46,7 +48,8 @@ public class UsuarioController {
     }
 
     @PutMapping("/{rut}")
-    public ResponseEntity<?> actualizar(@PathVariable String rut, @Valid @RequestBody Usuario usuario) {
+    public ResponseEntity<?> actualizar(@PathVariable String rut, @Validated(OnUpdate.class) @RequestBody Usuario usuario
+    ) {
         try {
             Usuario usuarioActualizado = usuarioService.actualizar(rut, usuario);
             return ResponseEntity.ok(usuarioActualizado);

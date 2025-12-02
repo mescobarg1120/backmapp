@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.example.backmapp.validation.OnCreate;
 
 @Entity
 @Table(name = "usuarios")
@@ -38,7 +39,7 @@ public class Usuario {
     @Column(nullable = false)
     private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
-    @NotBlank(message = "La contraseña es obligatoria")
+    @NotBlank(message = "La contraseña es obligatoria", groups = OnCreate.class)
     @Column(nullable = false)
     private String password;
 
