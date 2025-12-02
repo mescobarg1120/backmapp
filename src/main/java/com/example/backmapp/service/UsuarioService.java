@@ -43,19 +43,22 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    public Usuario actualizar(String rut, Usuario usuario) {
-        Optional<Usuario> usuarioExistente = usuarioRepository.findById(rut);
-        if (usuarioExistente.isEmpty()) {
-            throw new RuntimeException("Usuario no encontrado");
-        }
-        usuario.setRut(rut);
-        // ✅ HASHEAR LA CONTRASEÑA si se está actualizando
-        if (usuario.getPassword() != null && !usuario.getPassword().isEmpty()) {
-            usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        } else {
-            // Si no se envía contraseña, mantener la existente
-            usuario.setPassword(usuarioExistente.get().getPassword());
-        }
+    public Usuario actualizar(String rut, Usuario usuarioActualizado) {
+        Usuario usuario = obtenerPorRut(rut)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Actualizar solo campos permitidos desde el panel de administración
+        usuario.setNombre(usuarioActualizado.getNombre());
+        usuario.setEmail(usuarioActualizado.getEmail());
+        usuario.setRol(usuarioActualizado.getRol());
+        usuario.setEstado(usuarioActualizado.getEstado());
+
+        // NO actualizar la contraseña desde el panel de administración
+        // La contraseña solo se puede cambiar:
+        // 1. Al crear el usuario
+        // 2. Desde un endpoint específico de cambio de contraseña
+        // 3. Por el usuario mismo desde su perfil
+
         return usuarioRepository.save(usuario);
     }
 
