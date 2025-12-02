@@ -2,6 +2,7 @@ package com.example.backmapp.controller;
 
 import com.example.backmapp.entity.AsignacionTarea;
 import com.example.backmapp.entity.Tarea;
+import com.example.backmapp.entity.DiaSemana;
 import com.example.backmapp.service.TareaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,26 +63,40 @@ public class TareaController {
         }
     }
 
+    // ----- Tomar tarea -----
     @PostMapping("/{id}/tomar")
     public ResponseEntity<?> tomarTarea(
             @PathVariable Long id,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request
+    ) {
         try {
-            AsignacionTarea.DiaSemana dia = AsignacionTarea.DiaSemana.valueOf(request.get("dia"));
+            String diaStr = request.get("dia");
             String usuarioId = request.get("usuarioId");
             String usuarioNombre = request.get("usuarioNombre");
 
+            if (diaStr == null || usuarioId == null || usuarioNombre == null) {
+                return ResponseEntity.badRequest().body("Faltan parámetros: dia, usuarioId, usuarioNombre");
+            }
+
+            // Convertimos el String al enum (aceptamos en minúsculas también)
+            DiaSemana dia = DiaSemana.valueOf(diaStr.toUpperCase());
+
             AsignacionTarea asignacion = tareaService.tomarTarea(id, dia, usuarioId, usuarioNombre);
             return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
+        } catch (IllegalArgumentException e) {
+            // Error al convertir el día
+            return ResponseEntity.badRequest().body("Día inválido. Usa: LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+    // ----- Completar tarea (usuario sube evidencia) -----
     @PutMapping("/asignaciones/{asignacionId}/completar")
     public ResponseEntity<?> completarTarea(
             @PathVariable Long asignacionId,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request
+    ) {
         try {
             String fotoUri = request.get("fotoUri");
             AsignacionTarea asignacion = tareaService.completarTarea(asignacionId, fotoUri);
@@ -91,6 +106,7 @@ public class TareaController {
         }
     }
 
+    // ----- Aprobar tarea (admin) -----
     @PutMapping("/asignaciones/{asignacionId}/aprobar")
     public ResponseEntity<?> aprobarTarea(@PathVariable Long asignacionId) {
         try {
@@ -101,10 +117,12 @@ public class TareaController {
         }
     }
 
+    // ----- Rechazar tarea (admin) -----
     @PutMapping("/asignaciones/{asignacionId}/rechazar")
     public ResponseEntity<?> rechazarTarea(
             @PathVariable Long asignacionId,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request
+    ) {
         try {
             String comentario = request.get("comentario");
             AsignacionTarea asignacion = tareaService.rechazarTarea(asignacionId, comentario);
@@ -114,11 +132,13 @@ public class TareaController {
         }
     }
 
+    // ----- Listar pendientes de aprobación -----
     @GetMapping("/pendientes-aprobacion")
     public ResponseEntity<List<AsignacionTarea>> obtenerPendientesAprobacion() {
         return ResponseEntity.ok(tareaService.obtenerPendientesAprobacion());
     }
 
+    // ----- Liberar asignación (admin quita la tarea) -----
     @DeleteMapping("/asignaciones/{asignacionId}")
     public ResponseEntity<?> liberarTarea(@PathVariable Long asignacionId) {
         try {
