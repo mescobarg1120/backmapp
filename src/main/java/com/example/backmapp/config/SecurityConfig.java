@@ -48,6 +48,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Permite login sin autenticación
                         .requestMatchers("/api/auth/**").permitAll()
+                        //Permitir acceso a Swagger
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/api-docs/**",        // ← AGREGADO
+                                "/swagger-config/**",
+                                "/v3/api-docs",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
                         // Resto de rutas protegidas
                         .anyRequest().authenticated()
                 )
