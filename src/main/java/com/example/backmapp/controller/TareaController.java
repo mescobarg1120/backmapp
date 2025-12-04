@@ -138,6 +138,13 @@ public class TareaController {
         return ResponseEntity.ok(tareaService.obtenerPendientesAprobacion());
     }
 
+
+    // ----- Listar todas las asignaciones -----
+    @GetMapping("/asignaciones")
+    public ResponseEntity<List<AsignacionTarea>> obtenerAsignaciones() {
+        return ResponseEntity.ok(tareaService.obtenerTodasAsignaciones());
+    }
+
     // ----- Liberar asignación (admin quita la tarea) -----
     @DeleteMapping("/asignaciones/{asignacionId}")
     public ResponseEntity<?> liberarTarea(@PathVariable Long asignacionId) {

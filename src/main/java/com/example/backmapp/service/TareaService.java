@@ -56,6 +56,11 @@ public class TareaService {
         tareaRepository.deleteById(id);
     }
 
+
+    public List<AsignacionTarea> obtenerTodasAsignaciones() {
+        return asignacionTareaRepository.findAll();
+    }
+
     // -------- LÓGICA DE NEGOCIO: ASIGNACIONES --------
 
     /**
