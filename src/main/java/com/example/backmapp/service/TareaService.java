@@ -10,13 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-
-
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
 
 @Service
 public class TareaService {
@@ -56,12 +54,78 @@ public class TareaService {
         tareaRepository.deleteById(id);
     }
 
+    // -------- ASIGNACIONES: CONSULTAS --------
 
     public List<AsignacionTarea> obtenerTodasAsignaciones() {
         return asignacionTareaRepository.findAll();
     }
 
+    /**
+     * Asignaciones para el admin, filtradas por rango de fechas (sobre fechaAsignacion).
+     * Si no se envían fechas, se usa la semana actual (lunes a domingo).
+     */
+    public List<AsignacionTarea> obtenerAsignacionesAdmin(LocalDate desde, LocalDate hasta) {
+
+        LocalDateTime desdeDT;
+        LocalDateTime hastaDT;
+
+        if (desde == null || hasta == null) {
+            LocalDate hoy = LocalDate.now();
+            LocalDate inicioSemana = hoy.with(DayOfWeek.MONDAY);
+            LocalDate finSemana = inicioSemana.plusDays(6); // lunes + 6 = domingo
+
+            desdeDT = inicioSemana.atStartOfDay();
+            // usamos exclusivo al día siguiente
+            hastaDT = finSemana.plusDays(1).atStartOfDay();
+        } else {
+            desdeDT = desde.atStartOfDay();
+            hastaDT = hasta.plusDays(1).atStartOfDay();
+        }
+
+        return asignacionTareaRepository.findByFechaAsignacionBetween(desdeDT, hastaDT);
+    }
+
+    /**
+     * Asignaciones de un usuario (para "Mis tareas" / dashboard).
+     * Si no se envían fechas -> todas las asignaciones del usuario.
+     * Si se envían fechas -> filtrado por rango.
+     */
+    public List<AsignacionTarea> obtenerAsignacionesUsuario(String usuarioId, LocalDate desde, LocalDate hasta) {
+        if (usuarioId == null || usuarioId.isBlank()) {
+            throw new RuntimeException("usuarioId es obligatorio");
+        }
+
+        // sin rango -> todas las asignaciones del usuario
+        if (desde == null && hasta == null) {
+            return asignacionTareaRepository.findByUsuarioId(usuarioId);
+        }
+
+        // si solo viene 'desde' o solo 'hasta', completamos el otro extremo con algo razonable
+        if (desde == null) {
+            // hace 30 días por decir algo
+            desde = LocalDate.now().minusDays(30);
+        }
+        if (hasta == null) {
+            // hoy
+            hasta = LocalDate.now();
+        }
+
+        LocalDateTime desdeDT = desde.atStartOfDay();
+        LocalDateTime hastaDT = hasta.plusDays(1).atStartOfDay();
+
+        return asignacionTareaRepository.findByUsuarioIdAndFechaAsignacionBetween(
+                usuarioId, desdeDT, hastaDT
+        );
+    }
+
     // -------- LÓGICA DE NEGOCIO: ASIGNACIONES --------
+
+    private boolean estaVencida(AsignacionTarea a) {
+        return a.getEstado() == EstadoAsignacion.TOMADA &&
+               a.getFechaAsignacion()
+                .plusHours(36)
+                .isBefore(LocalDateTime.now());
+    }
 
     /**
      * Tomar una tarea para un día específico.
@@ -79,7 +143,7 @@ public class TareaService {
             throw new RuntimeException("Esta tarea ya está asignada para este día");
         }
 
-        // Verificar disponibilidad total (simple, sin separar por semana todavía)
+        // Verificar disponibilidad total
         long asignacionesActuales = asignacionTareaRepository.findByTarea_Id(tareaId).size();
         if (asignacionesActuales >= tarea.getDisponibilidad()) {
             throw new RuntimeException("No hay disponibilidad para esta tarea");
@@ -97,7 +161,7 @@ public class TareaService {
     }
 
     /**
-     * El usuario marca la tarea como completada y sube foto.
+     * El usuario marca la tarea como completada y sube foto (o texto con evidencia).
      */
     @Transactional
     public AsignacionTarea completarTarea(Long asignacionId, String fotoUri) {
@@ -130,7 +194,7 @@ public class TareaService {
     }
 
     /**
-     * El admin rechaza una tarea (por mala evidencia, fuera de plazo, etc.).
+     * El admin rechaza una tarea (por mala evidencia, etc.).
      */
     @Transactional
     public AsignacionTarea rechazarTarea(Long asignacionId, String comentario) {

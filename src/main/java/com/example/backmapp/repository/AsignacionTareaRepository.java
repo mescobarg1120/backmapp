@@ -4,11 +4,10 @@ import com.example.backmapp.entity.AsignacionTarea;
 import com.example.backmapp.entity.DiaSemana;
 import com.example.backmapp.entity.EstadoAsignacion;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-        
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
 
 public interface AsignacionTareaRepository extends JpaRepository<AsignacionTarea, Long> {
 
@@ -20,4 +19,20 @@ public interface AsignacionTareaRepository extends JpaRepository<AsignacionTarea
 
     // Listar asignaciones por estado (por ejemplo, pendientes de aprobación)
     List<AsignacionTarea> findByEstado(EstadoAsignacion estado);
+
+    // Para dashboard admin: asignaciones en un rango de fechas
+    List<AsignacionTarea> findByFechaAsignacionBetween(
+            LocalDateTime desde,
+            LocalDateTime hasta
+    );
+
+    // Todas las asignaciones de un usuario
+    List<AsignacionTarea> findByUsuarioId(String usuarioId);
+
+    // Asignaciones de un usuario en un rango de fechas
+    List<AsignacionTarea> findByUsuarioIdAndFechaAsignacionBetween(
+            String usuarioId,
+            LocalDateTime desde,
+            LocalDateTime hasta
+    );
 }

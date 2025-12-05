@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.RequestParam;
+
 @RestController
 @RequestMapping("/api/tareas")
 @CrossOrigin(origins = "*")
@@ -75,17 +79,17 @@ public class TareaController {
             String usuarioNombre = request.get("usuarioNombre");
 
             if (diaStr == null || usuarioId == null || usuarioNombre == null) {
-                return ResponseEntity.badRequest().body("Faltan parámetros: dia, usuarioId, usuarioNombre");
+                return ResponseEntity.badRequest()
+                        .body("Faltan parámetros: dia, usuarioId, usuarioNombre");
             }
 
-            // Convertimos el String al enum (aceptamos en minúsculas también)
             DiaSemana dia = DiaSemana.valueOf(diaStr.toUpperCase());
 
             AsignacionTarea asignacion = tareaService.tomarTarea(id, dia, usuarioId, usuarioNombre);
             return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
         } catch (IllegalArgumentException e) {
-            // Error al convertir el día
-            return ResponseEntity.badRequest().body("Día inválido. Usa: LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO");
+            return ResponseEntity.badRequest()
+                    .body("Día inválido. Usa: LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -138,7 +142,6 @@ public class TareaController {
         return ResponseEntity.ok(tareaService.obtenerPendientesAprobacion());
     }
 
-
     // ----- Listar todas las asignaciones -----
     @GetMapping("/asignaciones")
     public ResponseEntity<List<AsignacionTarea>> obtenerAsignaciones() {
@@ -154,5 +157,20 @@ public class TareaController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // ----- Asignaciones por usuario -----
+    @GetMapping("/asignaciones-usuario")
+    public ResponseEntity<List<AsignacionTarea>> obtenerAsignacionesUsuario(
+            @RequestParam String usuarioId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta
+    ) {
+        List<AsignacionTarea> lista =
+                tareaService.obtenerAsignacionesUsuario(usuarioId, desde, hasta);
+
+        return ResponseEntity.ok(lista);
     }
 }
