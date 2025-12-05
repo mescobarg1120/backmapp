@@ -15,7 +15,6 @@ import java.util.Map;
 
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/tareas")
@@ -142,21 +141,11 @@ public class TareaController {
         return ResponseEntity.ok(tareaService.obtenerPendientesAprobacion());
     }
 
-    // ----- Listar todas las asignaciones -----
+    // ----- Listar TODAS las asignaciones (sin filtro) -----
+    // Usado por el Dashboard: /api/tareas/asignaciones
     @GetMapping("/asignaciones")
     public ResponseEntity<List<AsignacionTarea>> obtenerAsignaciones() {
         return ResponseEntity.ok(tareaService.obtenerTodasAsignaciones());
-    }
-
-    // ----- Liberar asignación (admin quita la tarea) -----
-    @DeleteMapping("/asignaciones/{asignacionId}")
-    public ResponseEntity<?> liberarTarea(@PathVariable Long asignacionId) {
-        try {
-            tareaService.liberarTarea(asignacionId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
     }
 
     // ----- Asignaciones por usuario -----
@@ -172,5 +161,30 @@ public class TareaController {
                 tareaService.obtenerAsignacionesUsuario(usuarioId, desde, hasta);
 
         return ResponseEntity.ok(lista);
+    }
+
+    // ----- Listar asignaciones ADMIN con filtro por fechas (histórico) -----
+    // Usado por Tareas.jsx para ver semanas anteriores:
+    // GET /api/tareas/asignaciones-admin?desde=2025-12-01&hasta=2025-12-07
+    @GetMapping("/asignaciones-admin")
+    public ResponseEntity<List<AsignacionTarea>> obtenerAsignacionesAdmin(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta
+    ) {
+        List<AsignacionTarea> lista = tareaService.obtenerAsignacionesAdmin(desde, hasta);
+        return ResponseEntity.ok(lista);
+    }
+
+    // ----- Liberar asignación (admin quita la tarea) -----
+    @DeleteMapping("/asignaciones/{asignacionId}")
+    public ResponseEntity<?> liberarTarea(@PathVariable Long asignacionId) {
+        try {
+            tareaService.liberarTarea(asignacionId);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
